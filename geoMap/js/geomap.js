@@ -24,6 +24,7 @@ var pathObj = {
 var activePathName = '';
 var pathCoords = [];
 var userId = 'default';
+var prasedResponse;
 
 
 
@@ -84,13 +85,16 @@ up206b.initialize = function () {
                     pathLink.html(pathID);
                     pathLink.attr({
                         "class": 'btn'
-                        , "data-pathId": pathID
                     });
                     pathLi.append(pathLink);
                 
                 var editPathLink = $(document.createElement('a'));
                     editPathLink.html('edit');
                     editPathLink.attr('class','btn');
+        
+                var deletePathLink = $(document.createElement('a'));
+                    deletePathLink.html('delete');
+                    deletePathLink.attr('class','btn');
  
                 var editPathColorForm = $(document.createElement('form'));
                 editPathColorForm.attr({
@@ -114,6 +118,7 @@ up206b.initialize = function () {
                 editPathColorForm.append(editPathColorset);
                 pathLi.append(editPathColorForm);
                 pathLi.append(editPathLink);
+                pathLi.append(deletePathLink);
 
                 editPathColorInput.colorPicker();
                 editPathColorInput.change(function(){
@@ -128,12 +133,69 @@ up206b.initialize = function () {
                 
                 pathUl.append(pathLi);
         
+       
+                $('#pathList li a:contains("delete")').unbind().click(function(e){
+                    console.log(userId);
+                    var thisPath = $(this).siblings('a:first').text();
+                    console.log(thisPath)
+                    
+                    $.ajax({
+                      type:'POST',
+                      url:'http://www.ff-stlorenz.at/geomap/mysql/delete.php',
+                      data:'userID='+userId+'&pathID='+thisPath,
+                      success:function(data) {
+                                if(data) { 
+                                    console.log('success: '+data);
+                                    $("#pathList").find('li a:contains("'+thisPath+'")').parent().remove();
+                                    
+                                } else {
+                                     console.log('error: '+data);
+                            }
+                        }
+                    });
+                    
+                });
+        
+                $('#pathList li a:first-child').unbind().click(function(e){
+                    //console.log($(this).text());
+                    var thisPathId = $(this).text();
+                    var result = $.grep(prasedResponse, function(e){ return e.pathID == thisPathId && e.userID == userId; });
+                    //console.log(result[0].path);
+                    var thisPathPath = result[0].path;
+                    var thisPathPathString = thisPathPath.replace(/\'/g, '"');
+                   //console.log(thisPathPathString);
+                    
+                    var thisPathPathObj = JSON.parse(thisPathPathString);
+                    //console.log(thisPathPathObj);
+                    
+                    activePathName = thisPathId;
+
+                    console.log(pathObj);
+                     console.log(pathObj[thisPathId].coords);
+                    
+                    
+                    
+                    drawLine(pathObj[activePathName].coords, pathObj[activePathName].pathColor);
+                    console.log(pathObj[activePathName].coords, pathObj[activePathName].pathColor);
+                    //console.log(pathObj[activePathName].coords);
+                    $('#pathList li a').removeClass('btn-inverse');
+                    $('li a:contains("'+activePathName+'")').addClass('btn-inverse');
+                    flightPath.set('editable', false);
+                    if(pathObj[activePathName].coords.length == 0){
+                       flightPath.set('editable', true); 
+                    }
+                    refreshGraph(pathObj[activePathName].coords);
+                    
+                    
+                    
+                });
+        
 
     }
     
-                    $('body').on('click', '#pathList li a', function (e) {
-                     console.log(e.currentTarget.nodeValue);
-                });
+//                    $('body').on('click', '#pathList li a', function (e) {
+//                     console.log(e.currentTarget.nodeValue);
+//                });
     
 
 
@@ -143,21 +205,26 @@ up206b.initialize = function () {
             type: "GET",
             url: "http://www.ff-stlorenz.at/geomap/mysql/api.php",                      
             success: function(response){ 
-                //$("#DBpathList").html('<a href="#">'+response.pathID+'</a>'); 
+               if(response[0]*1 != 0){
+                    var responseString1 = '['+response.replace(/\}{/g, '},{')+']';
+                    var responseString3 = responseString1.replace(/\\"/g, "'");
+                    prasedResponse  = JSON.parse(responseString3);
 
-                var responseString1 = '['+response.replace(/\}{/g, '},{')+']';
-                var responseString2 = responseString1.replace(/\ /g, '');
-                var responseString3 = responseString2.replace(/\\"/g, "'");
-                
-                var prasedResponse  = JSON.parse(responseString3);
-
-            for(var i=0;i<prasedResponse.length;i++){
-                //console.log(prasedResponse[i].pathID);
-                createPathList(prasedResponse[i].pathID, prasedResponse[i].path);
-            }
-                
-                
-                
+                    for(var i=0;i<prasedResponse.length;i++){
+                        //console.log(prasedResponse[i].path);
+                        createPathList(prasedResponse[i].pathID, prasedResponse[i].path);
+                        
+                    var thisPathPath = prasedResponse[i].path;
+                    var thisPathPathString = thisPathPath.replace(/\'/g, '"');
+                    var thisPathPathObj = JSON.parse(thisPathPathString);
+                        
+                    pathObj[prasedResponse[i].pathID] = {
+                        pathColor : '#555555',
+                        coords : thisPathPathObj
+                    }
+                        
+                    }
+                }
                 //alert(response);
                 $("#DBpathList a").click(function(e){
                     e.preventDefault();
@@ -261,7 +328,7 @@ up206b.initialize = function () {
             mapPath.push(movedPoint);
         }
             pathObj[activePathName].coords = mapPath.slice();
-            console.log(pathObj[activePathName].coords);
+            //console.log(pathObj[activePathName].coords);
         //pathObj[(pathId-1)][2] = flightPlanCoordinates; 
         //console.log(pathObj);
 
@@ -426,8 +493,8 @@ up206b.initialize = function () {
         finishPath.on('click', function () {
             flightPath.set('editable', false);
             checkPathLength();
-            console.log(len);
-            console.log(activePathName);
+            //console.log(len);
+            //console.log(activePathName);
             if(len > 1){
                 uploadPath(activePathName);
             }
@@ -454,7 +521,7 @@ up206b.initialize = function () {
     }
     
     function uploadPath(activePathName) {
-        console.log('upload path');
+        //console.log('upload path');
         var pathString = JSON.stringify(path.j);
 
         var postData = { userID: userId, 
