@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+<title>G(e)oMap</title>
+<link rel="stylesheet" type="text/css" href="css/layout.css" />
+<script type="text/javascript" src="http://www.google.com/jsapi"></script>
+ 
+<!-- Google Maps and Places API -->
+<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?libraries=places&sensor=false"></script>
+ 
+<!-- jQuery -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+ 
+<!-- bootstrap -->
+<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css" />
+<script src="js/bootstrap.min.js"></script>
+
+<!-- colorPicker -->
+<link rel="stylesheet" href="css/colorPicker.css" type="text/css" />
+<script language="javascript" type="text/javascript" src="js/jquery.colorPicker.js"/></script>
+
+<!-- ArcGIS -->
+<script type="text/javascript" src="js/arcgislink.js"></script>
+<script type="text/javascript" src="js/geomap.js"></script>
+
+<!-- HikeMap Overlay 
+<script language="javascript" type="text/javascript" src="http://dev.openlayers.org/OpenLayers.js"/></script>
+<script language="javascript" type="text/javascript" src="js/all-overlays-google.js"/></script>
+<link rel="stylesheet" type="text/css" href="http://dev.openlayers.org/theme/default/style.css" />
+ <link rel="stylesheet" type="text/css" href="http://dev.openlayers.org/examples/style.css" />
+ </head>
+<body onload="init()">
+ -->
+</head>
+<body>
+	<!-- side panel div container -->
+	<div class="sidePanel"> 
+ 
+		<div class="hero-unit">
+			<!--<h1>UP206B</h1>-->
+			<h1>G(e)oMap</h1>
+			<!--<p>Census Map</p>-->
+ 
+		</div>
+		
+        <!-- tabbable navigation -->
+		<div class="tabbable">
+			<ul class="nav nav-tabs">
+				<li class="active"><a href="#tab4" data-toggle="tab">myPaths</a></li>
+				<li><a href="#tab5" data-toggle="tab">import</a></li>
+			</ul>
+			<div class="tab-content">
+				<div class="tab-pane active" id="tab4">
+                    <ul id="pathList"></ul>
+				</div>
+				<div class="tab-pane" id="tab5">
+                    import new path
+
+				</div>
+			</div>
+		</div>
+		
+		
+ 
+		<!-- tabbable navigation -->
+		<div class="tabbable">
+			<ul class="nav nav-tabs">
+			    <li class="active"><a href="#tab0" data-toggle="tab">PathOptions</a></li>
+				<li><a href="#tab1" data-toggle="tab">Search</a></li>
+				<li><a href="#tab2" data-toggle="tab">Download</a></li>
+				<li><a href="#tab3" data-toggle="tab">Data & Charts</a></li>
+			</ul>
+			<div class="tab-content">
+				<div class="tab-pane active" id="tab0">
+					<!-- search form -->
+                    Custom Path Option
+				</div>
+				<div class="tab-pane" id="tab1">
+					<!-- search form -->
+					<form class="form-horizontal">
+						<fieldset>
+							<div class="control-group">
+								<input type="text" id="address" value="" placeholder="Enter an address or a zipcode">
+								<input type="button" value="find" onClick="up206b.geocode()" class="btn btn-primary">
+							</div>
+						</fieldset>
+					</form>
+				</div>
+				<div class="tab-pane" id="tab2">
+					<!-- Download -->
+					<div id="downloadList"></div>
+				</div>
+				<div class="tab-pane" id="tab3">
+				<div id="elevation_chart"></div>
+					<!-- Layers -->
+					<form class="form-horizontal">
+						<fieldset>
+							<div class="control-group" id="charts">
+ 
+							</div>
+						</fieldset>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+    <div class="mobileMenu" id="mobileMenu">
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+	<!-- map div container -->
+	<div id="map_canvas"></div>
+	<!--<div id="map" class="smallmap"></div>-->
+</body>
+</html>
