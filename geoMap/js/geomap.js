@@ -79,7 +79,7 @@ up206b.initialize = function () {
     var pathUl = $('#pathList');
     
     
-    function createPathList(pathID, pathCoords){
+    function createPathList(pathID, pathCoords, thisPathColor){
                 var pathLi = $(document.createElement('li'));
                 var pathLink = $(document.createElement('a'));
                     pathLink.html(pathID);
@@ -107,11 +107,11 @@ up206b.initialize = function () {
                 
                 var editPathColorInput = $(document.createElement('input'));
                 editPathColorInput.attr({
-                    'id': 'color'+pathId,
+                    'id': pathID,
                     'type': 'text',
-                    'name' : 'color'+pathId,
-                    'value' : '#FF0000'
-                });                
+                    'name' : 'color'+pathID,
+                    'value' : thisPathColor
+                });  
                 
                 
                 editPathColorset.append(editPathColorInput);
@@ -124,12 +124,20 @@ up206b.initialize = function () {
                 editPathColorInput.change(function(){
                     GMstrokeColor = editPathColorInput.val();
                     flightPath.set('strokeColor', GMstrokeColor);
+                    
+                    //console.log(this.id);
+                    //console.log(GMstrokeColor);
+
+                    
+                    if(!activePathName){
+                        activePathName = this.id;
+                    }
                     pathObj[activePathName].pathColor = GMstrokeColor;
+                    uploadPathColor(this.id, GMstrokeColor);
                 });
                 
-
                 $('#pathList li a').removeClass('btn-inverse');
-                $('#pathList li a:contains("'+activePathName+'")').addClass('btn-inverse'); 
+                //$('#pathList li a:contains("'+activePathName+'")').addClass('btn-inverse'); 
                 
                 pathUl.append(pathLi);
         
@@ -137,7 +145,7 @@ up206b.initialize = function () {
                 $('#pathList li a:contains("delete")').unbind().click(function(e){
                     console.log(userId);
                     var thisPath = $(this).siblings('a:first').text();
-                    console.log(thisPath)
+                    //console.log(thisPath)
                     
                     $.ajax({
                       type:'POST',
@@ -160,23 +168,18 @@ up206b.initialize = function () {
                     //console.log($(this).text());
                     var thisPathId = $(this).text();
                     var result = $.grep(prasedResponse, function(e){ return e.pathID == thisPathId && e.userID == userId; });
-                    //console.log(result[0].path);
-                    var thisPathPath = result[0].path;
-                    var thisPathPathString = thisPathPath.replace(/\'/g, '"');
-                   //console.log(thisPathPathString);
-                    
-                    var thisPathPathObj = JSON.parse(thisPathPathString);
-                    //console.log(thisPathPathObj);
-                    
-                    activePathName = thisPathId;
+                    if(result.length){
+                        //console.log(result);
+                        var thisPathPath = result[0].path;
+                        var thisPathPathString = thisPathPath.replace(/\'/g, '"');
+                       //console.log(thisPathPathString);
 
-                    console.log(pathObj);
-                     console.log(pathObj[thisPathId].coords);
-                    
-                    
-                    
+                        var thisPathPathObj = JSON.parse(thisPathPathString);
+                        //console.log(thisPathPathObj);
+                    }
+                    activePathName = thisPathId;
                     drawLine(pathObj[activePathName].coords, pathObj[activePathName].pathColor);
-                    console.log(pathObj[activePathName].coords, pathObj[activePathName].pathColor);
+                    //console.log(pathObj[activePathName].coords, pathObj[activePathName].pathColor);
                     //console.log(pathObj[activePathName].coords);
                     $('#pathList li a').removeClass('btn-inverse');
                     $('li a:contains("'+activePathName+'")').addClass('btn-inverse');
@@ -186,6 +189,15 @@ up206b.initialize = function () {
                     }
                     refreshGraph(pathObj[activePathName].coords);
                     
+                    
+                    function zoom() {
+                      var bounds = new google.maps.LatLngBounds();
+                      flightPath.getPath().forEach(function(latLng) {
+                        bounds.extend(latLng);
+                      });
+                      map.fitBounds(bounds);                    
+                    }
+                    zoom();
                     
                     
                 });
@@ -212,18 +224,25 @@ up206b.initialize = function () {
 
                     for(var i=0;i<prasedResponse.length;i++){
                         //console.log(prasedResponse[i].path);
-                        createPathList(prasedResponse[i].pathID, prasedResponse[i].path);
-                        
+                       
+
+                    var thisPath = prasedResponse[i].pathID;    
                     var thisPathPath = prasedResponse[i].path;
+                    var thisPathColor = prasedResponse[i].pathColor;
                     var thisPathPathString = thisPathPath.replace(/\'/g, '"');
                     var thisPathPathObj = JSON.parse(thisPathPathString);
                         
-                    pathObj[prasedResponse[i].pathID] = {
-                        pathColor : '#555555',
-                        coords : thisPathPathObj
-                    }
+                    //console.log(prasedResponse[i].pathColor);
                         
+                    pathObj[prasedResponse[i].pathID] = {
+                        pathColor : thisPathColor,
+                        coords : thisPathPathObj
+                        }
+                     createPathList(prasedResponse[i].pathID, prasedResponse[i].path, thisPathColor);
+   
                     }
+//                   console.log('####');
+                   console.log(pathObj);
                 }
                 //alert(response);
                 $("#DBpathList a").click(function(e){
@@ -246,6 +265,7 @@ up206b.initialize = function () {
         , mapTypeId: google.maps.MapTypeId.TERRAIN
         , mapTypeControl: false //disable the map type control
     };
+    
     map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
     map.setOptions({
         styles: mapStyles.regular
@@ -411,7 +431,9 @@ up206b.initialize = function () {
             
             
             if (pathName && createNewPathBool) {
-            createPathList(pathName);
+               var emptyPath = '';
+                createPathList(pathName, emptyPath, pathObj[activePathName].pathColor);
+                //$('#pathList li a:contains("'+activePathName+'")').addClass('btn-inverse'); 
             }
             
             
@@ -436,6 +458,7 @@ up206b.initialize = function () {
         });   
             //Event listener
             google.maps.event.addListener(map, 'click', function (event) {
+                
                 var myLatLng = {
                     lat: event.latLng.lat()
                     , lng: event.latLng.lng()
@@ -449,7 +472,7 @@ up206b.initialize = function () {
                var editable = flightPath.get('editable');
                 if(editable){
                     pathObj[activePathName].coords.push(newPoint);
-                    drawLine(pathObj[activePathName].coords);
+                    drawLine(pathObj[activePathName].coords, pathObj[activePathName].pathColor);
                     updatePath(pathObj[activePathName].coords);    
                 }
 
@@ -493,10 +516,12 @@ up206b.initialize = function () {
         finishPath.on('click', function () {
             flightPath.set('editable', false);
             checkPathLength();
+            var thisPathColor = pathObj[activePathName].pathColor;
+            
             //console.log(len);
             //console.log(activePathName);
             if(len > 1){
-                uploadPath(activePathName);
+               uploadPath(activePathName, thisPathColor);
             }
            
         });
@@ -520,12 +545,13 @@ up206b.initialize = function () {
         });
     }
     
-    function uploadPath(activePathName) {
+    function uploadPath(activePathName, thisPathColor) {
         //console.log('upload path');
         var pathString = JSON.stringify(path.j);
 
         var postData = { userID: userId, 
                           pathID: activePathName,
+                          pathColor: thisPathColor,
                           path: pathString
                          };
         
@@ -541,6 +567,32 @@ up206b.initialize = function () {
                 console.log('error: '+response);
           }
         });
+
+        
+    }
+    function uploadPathColor(pathId, pathColor) {
+        console.log('update color');
+        console.log(pathId, pathColor);
+        //uploadPath(activePathName, GMstrokeColor);
+//
+//        var postData = { userID: userId, 
+//                          pathID: activePathName,
+//                          pathColor: thisPathColor,
+//                          path: pathString
+//                         };
+        
+//        $.ajax({
+//          type: "POST",
+//          url: "http://www.ff-stlorenz.at/geomap/insert.php",
+//          dataType: "text",
+//          data: postData,
+//          success: function (response) {
+//              console.log('success: '+response);
+//          },
+//          error: function (response) {
+//                console.log('error: '+response);
+//          }
+//        });
 
         
     }
@@ -693,6 +745,7 @@ up206b.initialize = function () {
         $('#elevation_chart').css('display', 'none');
         $('#charts').html('');
     }
+    
     
     $(window).on('load resize',function(){
       var win = $(this);

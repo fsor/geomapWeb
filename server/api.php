@@ -8,7 +8,7 @@ if($conn === false){
 }
 
 
-$sql = "SELECT userID, pathID, path FROM geomap";
+$sql = "SELECT userID, pathID, pathColor, path FROM geomap";
 $result = $conn->query($sql);
 
 if ($result->num_rows > 0) {
@@ -17,6 +17,7 @@ if ($result->num_rows > 0) {
 $output = array(
     'userID' => $row["userID"],
     'pathID' => $row["pathID"],
+    'pathColor' => $row["pathColor"],
     'path' => $row["path"]
 );
 echo json_encode($output);
