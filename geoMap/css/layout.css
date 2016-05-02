@@ -48,6 +48,11 @@ body {
     height: 100%;
 }
 
+#logout{
+    color:blue;
+    cursor: pointer;
+}
+
 #floating-panel {
     position: absolute;
     top: 10px;
@@ -83,7 +88,7 @@ div.hero-unit {
     display: flex;
     height: 180px;
     margin: 10px;
-    padding: 0;
+    padding: 0 0 10px 0;
     position: relative;
 }
 
@@ -96,6 +101,14 @@ div.hero-unit h1{
     top: 0;
     opacity: 1;
     color:#546f25;
+}
+
+div.hero-unit img{
+    display: block;
+    height: 100%;
+    margin: 0 auto;
+    width: auto;
+    position: relative;
 }
 
 .sidePanel{
@@ -112,12 +125,44 @@ div.hero-unit h1{
 }
 
 #pathList li {
-list-style-type:none;
+    list-style-type:none;
 }
 
 #pathList li .btn, #pathList li form  {
     display:inline-block!important;
     margin-right: 10px;
+}
+
+#pathList span.fa{
+    color:#ccc;
+    margin-left:5px;
+}
+
+#pathList a.active span.fa-pencil{
+    color:#d48a49;
+    cursor: pointer;
+}
+
+#pathList a.active:hover span.fa-pencil{
+    color:#b65601;
+}
+
+.mobile #pathList a:not(.btn), .mobile #pathList form{
+    display: none!important;
+}
+
+.mobile #pathList li {
+    margin-bottom: 15px;
+}
+
+
+#pathList a.active span.fa-times{
+    color:#ff4545;
+    cursor: pointer;
+}
+
+#pathList a.active:hover span.fa-times{
+    color:#FF0000;
 }
 
 #downloadList .btn {
@@ -196,6 +241,7 @@ list-style-type:none;
     width: 100%;
     position: absolute;
     padding: 15px;
+    left:0;
 }
 
 #wrapper.toggled #page-content-wrapper {
@@ -251,12 +297,19 @@ list-style-type:none;
     background: none;
 }
 
+#menu-toggle{
+    z-index: 100;
+}
+
 
 .mobileMenu{
     width: 70px;
     height: 65px;
     position: absolute;
     z-index:10;
+    border-top:1px solid #eee;
+    border-right:1px solid #eee;
+    border-bottom:1px solid #eee;
     border-radius: 0 5px 5px 0;
     background-color: #fff;
     -webkit-transform: rotate(0deg);
@@ -268,7 +321,7 @@ list-style-type:none;
     -o-transition: .25s;
     transition: .25s;
     cursor: pointer;
-    left:0;
+    left:-1px;
     top:0;
 }
 
@@ -355,9 +408,6 @@ list-style-type:none;
 }
 
 
-
-
-@media(min-width:768px) {
     #wrapper {
         padding-left: 380px;
     }
@@ -377,17 +427,17 @@ list-style-type:none;
     #page-content-wrapper {
         padding: 20px;
         position: relative;
+        border-left: 1px solid #eee;
     }
 
     #wrapper.toggled #page-content-wrapper {
         position: relative;
         margin-right: 0;
     }
-}
 
-@media screen and (max-width: 480px) {
+@media screen and (max-width: 768px) {
     div.hero-unit h1{
-        font-size:40px;
+        font-size:60px;
     }
 }
 
