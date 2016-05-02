@@ -75,8 +75,39 @@ function trace(message) {
     }
 }
 //Function that gets run when the document loads
-up206b.initialize = function () {
+up206b.initialize = function (userData) {
     var pathUl = $('#pathList');
+
+    function checkLogStatus(userData){
+        var data;
+            if(!userData){
+                data = sessionStorage.getItem('geomap_user');
+            }else{
+                data = userData;
+            }
+
+        if(data){
+           console.log('logged in as user: '+data);
+            $('.loggedin_form').html('Sie sind eingelogged als: '+data+' <span id="logout">abmelden</span>');
+            $('.login_form').hide();
+            $('.tabbable, #pathList').show();
+            loadDBpaths(data);
+            userId = data;
+             $('#logout').unbind().click(function(){
+                 sessionStorage.clear();
+                  $('.login_form').show();
+                  $('.loggedin_form, #pathList, .tabbable').hide();
+                
+             });
+            
+        }else{
+             $('.login_form').show();
+            $('.tabbable, #pathList').hide();
+        }
+        
+    }
+    checkLogStatus(userData);
+    
     
     
     function createPathList(pathID, pathCoords, thisPathColor){
@@ -89,12 +120,10 @@ up206b.initialize = function () {
                     pathLi.append(pathLink);
                 
                 var editPathLink = $(document.createElement('a'));
-                    editPathLink.html('edit');
-                    editPathLink.attr('class','btn');
+                    editPathLink.html('<span class="fa fa-pencil fa-2x" aria-hidden="true"></span>');
         
                 var deletePathLink = $(document.createElement('a'));
-                    deletePathLink.html('delete');
-                    deletePathLink.attr('class','btn');
+                    deletePathLink.html('<span class="fa fa-times fa-2x" aria-hidden="true"></span>');
  
                 var editPathColorForm = $(document.createElement('form'));
                 editPathColorForm.attr({
@@ -141,27 +170,35 @@ up206b.initialize = function () {
                 
                 pathUl.append(pathLi);
         
+        
+                $('#pathList li a span.fa-pencil').unbind().click(function(e){
+                    if($(this).parent().hasClass('active')){
+                         flightPath.set('editable', true);
+                    }
+                });
+        
        
-                $('#pathList li a:contains("delete")').unbind().click(function(e){
-                    console.log(userId);
-                    var thisPath = $(this).siblings('a:first').text();
-                    //console.log(thisPath)
-                    
-                    $.ajax({
-                      type:'POST',
-                      url:'http://www.ff-stlorenz.at/geomap/mysql/delete.php',
-                      data:'userID='+userId+'&pathID='+thisPath,
-                      success:function(data) {
-                                if(data) { 
-                                    console.log('success: '+data);
-                                    $("#pathList").find('li a:contains("'+thisPath+'")').parent().remove();
-                                    
-                                } else {
-                                     console.log('error: '+data);
+                $('#pathList li a span.fa-times').unbind().click(function(e){
+                    if($(this).parent().hasClass('active')){
+                        console.log(userId);
+                        var thisPath = $(this).parent().siblings('a:first').text();
+                        //console.log(thisPath)
+                        console.log(thisPath);
+                        $.ajax({
+                          type:'POST',
+                          url:'http://www.ff-stlorenz.at/geomap/mysql/delete.php',
+                          data:'userID='+userId+'&pathID='+thisPath,
+                          success:function(data) {
+                                    if(data) { 
+                                        console.log('success: '+data);
+                                        $("#pathList").find('li a:contains("'+thisPath+'")').parent().remove();
+
+                                    } else {
+                                         console.log('error: '+data);
+                                }
                             }
-                        }
-                    });
-                    
+                        });
+                    }
                 });
         
                 $('#pathList li a:first-child').unbind().click(function(e){
@@ -181,29 +218,37 @@ up206b.initialize = function () {
                     drawLine(pathObj[activePathName].coords, pathObj[activePathName].pathColor);
                     //console.log(pathObj[activePathName].coords, pathObj[activePathName].pathColor);
                     //console.log(pathObj[activePathName].coords);
-                    $('#pathList li a').removeClass('btn-inverse');
+                    $('#pathList li a').removeClass('btn-inverse active');
                     $('li a:contains("'+activePathName+'")').addClass('btn-inverse');
+                    $(this).siblings().addClass('active');
+                    
+                    
                     flightPath.set('editable', false);
                     if(pathObj[activePathName].coords.length == 0){
                        flightPath.set('editable', true); 
                     }
                     refreshGraph(pathObj[activePathName].coords);
-                    
-                    
-                    function zoom() {
-                      var bounds = new google.maps.LatLngBounds();
-                      flightPath.getPath().forEach(function(latLng) {
-                        bounds.extend(latLng);
-                      });
-                      map.fitBounds(bounds);                    
-                    }
-                    zoom();
-                    
-                    
+
+                    zoom(pathObj[activePathName].coords);
                 });
         
+                    function zoom(coords) {
 
-    }
+                      //Add new bounds object to map
+                     //map.fitBounds(bounds);
+                        
+//                        console.log(map.getBounds());
+//                        console.log(map.getBounds().R.R);
+//                        console.log(map.getBounds().R.j);
+//                        console.log(map.getBounds().j.R);
+//                        console.log(map.getBounds().j.j);
+                        //console.log(map.getZoom());
+  
+
+                        
+                     }
+
+                }
     
 //                    $('body').on('click', '#pathList li a', function (e) {
 //                     console.log(e.currentTarget.nodeValue);
@@ -212,9 +257,11 @@ up206b.initialize = function () {
 
 
     
-    function loadDBpaths(){
+    function loadDBpaths(userIdentitiy){
+        
         $.ajax({    //create an ajax request to load_page.php
-            type: "GET",
+          type: "POST",
+            data: {'userID': userIdentitiy},
             url: "http://www.ff-stlorenz.at/geomap/mysql/api.php",                      
             success: function(response){ 
                if(response[0]*1 != 0){
@@ -256,7 +303,7 @@ up206b.initialize = function () {
                 }
         });
     }
-    loadDBpaths();
+    
 
     var latlng = new google.maps.LatLng(48.226804, 16.348822);
     var myOptions = {
@@ -265,6 +312,8 @@ up206b.initialize = function () {
         , mapTypeId: google.maps.MapTypeId.TERRAIN
         , mapTypeControl: false //disable the map type control
     };
+    
+    
     
     map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
     map.setOptions({
@@ -305,11 +354,12 @@ up206b.initialize = function () {
     }
 
 
-    var map, flightPath = new google.maps.Polyline();
+    var map, flightPath = new google.maps.Polyline(), marker = new google.maps.Marker(), markers = [];
 
     function drawLine(loc, color) {
+        deleteMarker();
         flightPath.setMap(null);
-        //console.log(loc);
+        
         var currCoords, pathColor;
         flightPath = new google.maps.Polyline({
             path: loc
@@ -319,11 +369,48 @@ up206b.initialize = function () {
             , editable: true
             , strokeWeight: 2
         });
+        
+        var middle = loc.length/2;
+             var middleRounded = Math.round(middle * Math.pow(10, 0)) / Math.pow(10, 0);
+             //console.log(middleRounded);
+
+         for (i = 0; i < loc.length; i++) {
+             //console.log(loc[i]);
+              marker = new google.maps.Marker({
+              position: new google.maps.LatLng(loc[i].lat, loc[i].lng),
+              map: map
+            });
+             markers.push(marker);
+             
+
+             
+             if(i == (middleRounded)){
+                 map.panTo(marker.position); //Make map global
+             }
+         }
+
+        function setMapOnAll(map) {
+          for (var j = 0; j < markers.length; j++) {
+            markers[j].setMap(map);
+          }
+        }
+
+
+        function deleteMarker() {
+            setMapOnAll(null);
+            marker=null;
+        }
+           
+
+    
+        
+
         google.maps.event.addListener(flightPath.getPath(), "insert_at", updatePath);
         google.maps.event.addListener(flightPath.getPath(), "remove_at", updatePath);
         google.maps.event.addListener(flightPath.getPath(), "set_at", updatePath);
-
         flightPath.setMap(map);
+        
+
     };
 
 
@@ -332,6 +419,7 @@ up206b.initialize = function () {
         len = path.getLength();
         coordStr = '';
         mapPath = [];
+        mapPath.length = 0;
         if (len > 1) {
             $('a[href="#tab2"]').removeClass('inactive');
        
@@ -364,7 +452,7 @@ up206b.initialize = function () {
               pathDist = distanceWithCommas(distanceRnd);
        
         createJSON(path);
-                
+            
             if (pathObj[activePathName].coords.length > 1) displayPathElevation(pathObj[activePathName].coords, elevator, map);
         }
     
@@ -458,11 +546,6 @@ up206b.initialize = function () {
         });   
             //Event listener
             google.maps.event.addListener(map, 'click', function (event) {
-                
-                var myLatLng = {
-                    lat: event.latLng.lat()
-                    , lng: event.latLng.lng()
-                };
 
                 var newPoint = {
                     lat: event.latLng.lat()
@@ -526,23 +609,6 @@ up206b.initialize = function () {
            
         });
 
-        // Set CSS for the control border.
-        var editPath = $(document.createElement('div'));
-        editPath.attr('class','GMbtn');
-        editPath.title = 'Click to recenter the map######';
-        editPath.appendTo(controlDiv);
-
-        // Set CSS for the control interior.
-        var editPathTxt = $(document.createElement('div'));
-        editPathTxt.attr('class','GMbtnTxt');
-        editPathTxt.html('Edit Path');
-        editPath.append(editPathTxt);
-
-        // Setup the click event listeners: simply set the map to Chicago.
-        editPath.on('click', function () {
-            flightPath.set('editable', true);
-            console.log('EDIT');
-        });
     }
     
     function uploadPath(activePathName, thisPathColor) {
@@ -575,24 +641,23 @@ up206b.initialize = function () {
         console.log(pathId, pathColor);
         //uploadPath(activePathName, GMstrokeColor);
 //
-//        var postData = { userID: userId, 
-//                          pathID: activePathName,
-//                          pathColor: thisPathColor,
-//                          path: pathString
-//                         };
+        var postData = { userID: userId, 
+                          pathID: pathId,
+                          pathColor: pathColor
+                         };
         
-//        $.ajax({
-//          type: "POST",
-//          url: "http://www.ff-stlorenz.at/geomap/insert.php",
-//          dataType: "text",
-//          data: postData,
-//          success: function (response) {
-//              console.log('success: '+response);
-//          },
-//          error: function (response) {
-//                console.log('error: '+response);
-//          }
-//        });
+        $.ajax({
+          type: "POST",
+          url: "http://www.ff-stlorenz.at/geomap/mysql/updateColor.php",
+          dataType: "text",
+          data: postData,
+          success: function (response) {
+              console.log('success: '+response);
+          },
+          error: function (response) {
+                console.log('error: '+response);
+          }
+        });
 
         
     }
@@ -750,16 +815,34 @@ up206b.initialize = function () {
     $(window).on('load resize',function(){
       var win = $(this);
       if (win.width() <= 992) {
-          $('.sidePanel, #map_canvas, #mobileMenu').toggleClass('mobile');
+          $('#wrapper').addClass('toggled mobile');
+          $(".mobileMenu").removeClass("closed");
       }
         else{
-            $('.mobile').removeClass('mobile');
+            $('#wrapper').removeClass('toggled mobile');
+            $(".mobileMenu").addClass("closed");
         }
+        refreshGmap();
     });
     
-    $('#mobileMenu').click(function(){
-      
-        $('.sidePanel, #map_canvas, #mobileMenu').toggleClass('mobile');
+//    $('#mobileMenu').click(function(){
+//      
+//        $('.sidePanel, #map_canvas, #mobileMenu').toggleClass('mobile');
+//    });
+    
+    $("#menu-toggle").click(function(e) {
+        e.preventDefault();
+        $("#wrapper").toggleClass("toggled");
+        $(".mobileMenu").toggleClass("closed");
+        
+        refreshGmap();
     });
-
+    
+    function refreshGmap(){
+    clearTimeout(reloadMap);
+        var reloadMap = setTimeout(
+          function() {
+            google.maps.event.trigger(map_canvas, 'resize');
+          }, 250);
+    }
 }

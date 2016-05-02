@@ -16,6 +16,9 @@
 <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css" />
 <script src="js/bootstrap.min.js"></script>
 
+<!-- font awesome -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
+
 <!-- colorPicker -->
 <link rel="stylesheet" href="css/colorPicker.css" type="text/css" />
 <script language="javascript" type="text/javascript" src="js/jquery.colorPicker.js"/></script>
@@ -23,6 +26,10 @@
 <!-- ArcGIS -->
 <script type="text/javascript" src="js/arcgislink.js"></script>
 <script type="text/javascript" src="js/geomap.js"></script>
+
+<!-- Login -->
+<script type="text/javascript" src="js/functions.js"></script>
+<link rel="stylesheet" href="css/login.css">
 
 <!-- HikeMap Overlay 
 <script language="javascript" type="text/javascript" src="http://dev.openlayers.org/OpenLayers.js"/></script>
@@ -32,17 +39,37 @@
  </head>
 <body onload="init()">
  -->
+ 
+
 </head>
 <body>
+    <div id="wrapper">
+
+        <!-- Sidebar -->
+        <div id="sidebar-wrapper">
 	<!-- side panel div container -->
 	<div class="sidePanel"> 
- 
 		<div class="hero-unit">
-			<!--<h1>UP206B</h1>-->
+
 			<h1>G(e)oMap</h1>
-			<!--<p>Census Map</p>-->
+    <!--   <img src="img/appicon.png" alt="">  -->
+
  
 		</div>
+		  <div class="loggedin_form"></div>
+		
+        <div class="login_form">
+                <h3>Login</h3>
+                <form method="POST">
+                <label>Username</label>
+                <input type="text" name="username" id="username" placeholder="your username" /><br />
+                <label>Password</label>
+                <input type="password" name="pasword" id="password" placeholder="your password" /><br />
+                <input type="submit" id="submit_login" name="submit" class="button loginbtn" value="Login" />
+                <span class="login_loading"></span>
+                <span class="errormess"></span>
+                </form>
+            </div>
 		
         <!-- tabbable navigation -->
 		<div class="tabbable">
@@ -105,14 +132,40 @@
 			</div>
 		</div>
 	</div>
-    <div class="mobileMenu" id="mobileMenu">
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
+        </div>
+        <!-- /#sidebar-wrapper -->
+
+        <!-- Page Content -->
+        <div id="page-content-wrapper">
+            <div class="container-fluid">
+                   <a href="#menu-toggle" id="menu-toggle"><div class="mobileMenu closed" id="mobileMenu">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div></a>
+
+           <div id="map_canvas"></div>
+           
+            </div>
+        </div>
+        <!-- /#page-content-wrapper -->
+
     </div>
+
+
+
+
 	<!-- map div container -->
-	<div id="map_canvas"></div>
+	
 	<!--<div id="map" class="smallmap"></div>-->
+
+
+	  <script>
+
+          
+
+
+    </script>
 </body>
 </html>

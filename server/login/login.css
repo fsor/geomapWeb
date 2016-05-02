@@ -1,0 +1,99 @@
+
+.login_form {
+  width: 300px;
+  height: 50%;
+  overflow: auto;
+  margin: auto;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+}
+.login_form p{
+padding:10px 0;
+font:normal 12px Tahoma;
+color:#777;
+}
+.login_form h3{
+background:#C24445;
+color:#fff;
+padding:8px;
+margin-bottom:5px;
+font:bold 12px Tahoma;
+}
+.login_form label {
+padding:5px;
+display:block;
+font:bold 12px Tahoma;
+color:#666;
+}
+.login_form input[type=text], .login_form input[type=password] {
+padding:5px;
+border:1px solid #ddd;
+font:normal 12px Tahoma;
+width:288px;
+}
+.inputbutton {
+	margin-top:10px;
+	cursor:pointer;
+	display:block; 
+	display:inline-block;
+	outline:none;
+	position:relative;
+	font-size:11px; 
+	padding:4px 8px; 
+	font:normal 0.7em Tahoma;
+	text-align:center;
+	text-decoration:none;
+	overflow:visible;
+	white-space:nowrap;
+	z-index:1;
+	color:#FFF;
+	text-shadow:#555 -1px -1px 0px;
+	border:1px solid;
+	border-color:#333;
+	border-color:rgba(0, 0, 0, .3);
+	-moz-box-shadow:
+		0px 1px 0px rgba(255, 255, 255, .75) inset,
+		0px -1px 1px rgba(255, 255, 255, .2) inset
+	;
+	-webkit-box-shadow:
+		0px 1px 0px rgba(255, 255, 255, .75) inset, 
+		0px -1px 1px rgba(255, 255, 255, .2) inset 
+	;
+	box-shadow:
+		0px 1px 0px rgba(255, 255, 255, .75) inset, 
+		0px -1px 0px rgba(255, 255, 255, .2) inset 
+	;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#55ffffff', endColorstr='#00ffffff');
+}
+
+.inputbutton.grey{
+	background:	-moz-linear-gradient(top, #999999, #444444) no-repeat;
+	background:	-webkit-gradient(linear, center top, center bottom, from(#999999), to(#444444)) no-repeat;	
+	background-color:#666666;
+}
+.inputbutton.grey:hover{
+	background:	-moz-linear-gradient(top, #999999, #666666) no-repeat;
+	background:	-webkit-gradient(linear, center top, center bottom, from(#999999), to(#666666)) no-repeat;
+	background-color:#777777;
+}
+.inputbutton.grey:active{
+	background:#555555;
+}
+.inputbutton.blue{
+	background:	-moz-linear-gradient(top, #00a9e1, #0049af) no-repeat;
+	background:	-webkit-gradient(linear, center top, center bottom, from(#00a9e1), to(#0049af)) no-repeat;	
+	background-color:#006ebd;
+}
+.inputbutton.blue:hover{
+	background:	-moz-linear-gradient(top, #00a9e1, #0067cb) no-repeat;
+	background:	-webkit-gradient(linear, center top, center bottom, from(#00a9e1), to(#0067cb)) no-repeat;
+	background-color:#0077cc;
+}
+.inputbutton.blue:active{
+	background:#005094;
+}
+.errormess {
+font:bold 12px Tahoma;
+margin-left:5px;
+color:#BC3F40;
+}

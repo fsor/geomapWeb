@@ -1,5 +1,11 @@
-body{
-    margin:0!important;
+html{
+    height:100%;
+}
+
+html, body{
+    margin: 0;
+     height:100%;
+    padding: 0;
 }
 
 .container{
@@ -7,6 +13,11 @@ body{
     max-width:960px;
     margin:2em auto;
     border:3px solid #ccc;
+}
+
+div.container-fluid {
+    padding:0;
+    margin:0;
 }
 
 #OpenLayers_Map_2_OpenLayers_ViewPort{
@@ -29,14 +40,8 @@ body{
 }
 
 
-main {
-    
-}
-
-html, body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
+body {
+    overflow: hidden;
 }
 
 #map {
@@ -64,8 +69,9 @@ html, body {
 }
 
 #map_canvas{
-    height:100%; 
-    margin-left:400px;
+    height:100%;
+    position: inherit!important;
+    transform: inherit!important;
 }
 
 #map_canvas.mobile{
@@ -73,21 +79,27 @@ html, body {
 }
 
 div.hero-unit {
-    padding:0;
-    margin:10px;
-    height:180px;
-    position: relative;
     background-image: url("../img/mapBg.JPG");
+    display: flex;
+    height: 180px;
+    margin: 10px;
+    padding: 0;
+    position: relative;
 }
 
-.hero-unit h1{
-    margin:0;
-    display:inline-block;
+div.hero-unit h1{
+   bottom: 0;
+    display: table;
+    left: 0;
+    margin: auto !important;
+    right: 0;
+    top: 0;
+    opacity: 1;
+    color:#546f25;
 }
 
 .sidePanel{
     /*position:absolute;*/
-    max-width:380px;
     width:100%;
     height: 100%; 
     overflow:auto; 
@@ -133,10 +145,115 @@ list-style-type:none;
     padding-right:5px;
 }
 
+
+#map_canvas > .gm-style{
+	z-index:auto!important;
+}
+
+
+/*!
+ * Start Bootstrap - Simple Sidebar HTML Template (http://startbootstrap.com)
+ * Code licensed under the Apache License v2.0.
+ * For details, see http://www.apache.org/licenses/LICENSE-2.0.
+ */
+
+/* Toggle Styles */
+
+#wrapper {
+    padding-left: 0;
+    -webkit-transition: all 0.25s;
+    -moz-transition: all 0.25s;
+    -o-transition: all 0.25s;
+    transition: all 0.25s;
+    height: 100%;
+    overflow: hidden;
+    padding-left: 380px;
+}
+
+#wrapper.toggled {
+    padding-left: 380px;
+}
+
+#sidebar-wrapper {
+    z-index: 1000;
+    left: 380px;
+    width: 0;
+    height: 100%;
+    margin-left: -380px;
+    overflow-y: auto;
+    -webkit-transition: all 0.25s;
+    -moz-transition: all 0.25s;
+    -o-transition: all 0.25s;
+    transition: all 0.25s;
+    float:left;
+}
+
+#wrapper.toggled #sidebar-wrapper {
+    width: 380px;
+}
+
+#page-content-wrapper {
+    width: 100%;
+    position: absolute;
+    padding: 15px;
+}
+
+#wrapper.toggled #page-content-wrapper {
+    position: absolute;
+    margin-right: -380px;
+}
+
+/* Sidebar Styles */
+
+.sidebar-nav {
+    position: absolute;
+    top: 0;
+    width: 380px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sidebar-nav li {
+    text-indent: 20px;
+    line-height: 40px;
+}
+
+.sidebar-nav li a {
+    display: block;
+    text-decoration: none;
+    color: #999999;
+}
+
+.sidebar-nav li a:hover {
+    text-decoration: none;
+    color: #fff;
+    background: rgba(255,255,255,0.2);
+}
+
+.sidebar-nav li a:active,
+.sidebar-nav li a:focus {
+    text-decoration: none;
+}
+
+.sidebar-nav > .sidebar-brand {
+    height: 65px;
+    font-size: 18px;
+    line-height: 60px;
+}
+
+.sidebar-nav > .sidebar-brand a {
+    color: #999999;
+}
+
+.sidebar-nav > .sidebar-brand a:hover {
+    color: #fff;
+    background: none;
+}
+
+
 .mobileMenu{
-    display: none;
     width: 70px;
-    left:400px;
     height: 65px;
     position: absolute;
     z-index:10;
@@ -146,14 +263,13 @@ list-style-type:none;
     -moz-transform: rotate(0deg);
     -o-transform: rotate(0deg);
     transform: rotate(0deg);
-    -webkit-transition: .5s ease-in-out;
-    -moz-transition: .5s ease-in-out;
-    -o-transition: .5s ease-in-out;
-    transition: .5s ease-in-out;
+    -webkit-transition: .25s;
+    -moz-transition: .25s;
+    -o-transition: .25s;
+    transition: .25s;
     cursor: pointer;
-}
-.mobileMenu.mobile{
     left:0;
+    top:0;
 }
 
 .mobileMenu span{
@@ -161,7 +277,7 @@ list-style-type:none;
     position: absolute;
     height: 9px;
     width: 80%;
-    background: #d3531a;
+    background: #546f25;
     border-radius: 9px;
     opacity: 1;
     left: 10%;
@@ -169,13 +285,32 @@ list-style-type:none;
     -moz-transform: rotate(0deg);
     -o-transform: rotate(0deg);
     transform: rotate(0deg);
-    -webkit-transition: .25s ease-in-out;
-    -moz-transition: .25s ease-in-out;
-    -o-transition: .25s ease-in-out;
-    transition: .25s ease-in-out;
+    -webkit-transition: .25s;
+    -moz-transition: .25s;
+    -o-transition: .25s;
+    transition: .25s;
 }
 
+
+.mobileMenu.closed span{
+    background: #bbb;
+}
+
+
+.mobileMenu.closed:hover span {
+    background: #546f25;
+}
+
+.mobileMenu:not(.closed) span {
+    background: #546f25;
+}
+
+.mobileMenu:not(.closed):hover span {
+    background: #bbb;
+}
 /* Icon 3 */
+
+
 
 .mobileMenu span:nth-child(1) {
     top: 10px;
@@ -189,34 +324,65 @@ list-style-type:none;
     top: 46px;
 }
 
-.mobileMenu.open span:nth-child(1) {
+.mobileMenu.closed span:nth-child(1) {
     top: 18px;
     width: 0%;
     left: 50%;
 }
 
-.mobileMenu.open span:nth-child(2) {
+
+
+
+
+.mobileMenu.closed span:nth-child(2) {
     -webkit-transform: rotate(45deg);
     -moz-transform: rotate(45deg);
     -o-transform: rotate(45deg);
     transform: rotate(45deg);
 }
 
-.mobileMenu.open span:nth-child(3) {
+.mobileMenu.closed span:nth-child(3) {
     -webkit-transform: rotate(-45deg);
     -moz-transform: rotate(-45deg);
     -o-transform: rotate(-45deg);
     transform: rotate(-45deg);
 }
 
-.mobileMenu.open span:nth-child(4) {
+.mobileMenu.closed span:nth-child(4) {
     top: 18px;
     width: 0%;
     left: 50%;
 }
 
-#map_canvas > .gm-style{
-	z-index:auto!important;
+
+
+
+@media(min-width:768px) {
+    #wrapper {
+        padding-left: 380px;
+    }
+
+    #wrapper.toggled {
+        padding-left: 0;
+    }
+
+    #sidebar-wrapper {
+        width: 380px;
+    }
+
+    #wrapper.toggled #sidebar-wrapper {
+        width: 0;
+    }
+
+    #page-content-wrapper {
+        padding: 20px;
+        position: relative;
+    }
+
+    #wrapper.toggled #page-content-wrapper {
+        position: relative;
+        margin-right: 0;
+    }
 }
 
 @media screen and (max-width: 480px) {
