@@ -120,10 +120,13 @@ up206b.initialize = function (userData) {
                     pathLi.append(pathLink);
                 
                 var editPathLink = $(document.createElement('a'));
-                    editPathLink.html('<span class="fa fa-pencil fa-2x" aria-hidden="true"></span>');
+                    editPathLink.html('<span class="fa fa-map fa-2x" aria-hidden="true"></span>');
         
                 var deletePathLink = $(document.createElement('a'));
                     deletePathLink.html('<span class="fa fa-times fa-2x" aria-hidden="true"></span>');
+        
+                var renamePathLink = $(document.createElement('a'));
+                    renamePathLink.html('<span class="fa fa-pencil fa-2x" aria-hidden="true"></span>');
  
                 var editPathColorForm = $(document.createElement('form'));
                 editPathColorForm.attr({
@@ -148,6 +151,7 @@ up206b.initialize = function (userData) {
                 pathLi.append(editPathColorForm);
                 pathLi.append(editPathLink);
                 pathLi.append(deletePathLink);
+                pathLi.append(renamePathLink);
 
                 editPathColorInput.colorPicker();
                 editPathColorInput.change(function(){
@@ -375,17 +379,66 @@ up206b.initialize = function (userData) {
              //console.log(middleRounded);
 
          for (i = 0; i < loc.length; i++) {
-             //console.log(loc[i]);
+             
+             if(i == 0){
+                //console.log('first-marker: '+i);
+                 
+             firstmarker = new google.maps.Marker({
+              position: new google.maps.LatLng(loc[i].lat, loc[i].lng),
+              icon: 'http://maps.google.com/mapfiles/ms/micons/green.png',
+              map: map
+                });
+             markers.push(firstmarker);
+                 
+                 
+             }else if(i == loc.length-1){
+                 //console.log('last-marker: '+i);
+                 
+             lastmarker = new google.maps.Marker({
+              position: new google.maps.LatLng(loc[i].lat, loc[i].lng),
+              icon: 'http://maps.google.com/mapfiles/ms/micons/red.png',
+              map: map
+                });
+             markers.push(lastmarker);
+             }
+             
+             (function(i) {
+                             //if "img"@mysql !empty
+             if((loc[i].img)){
+              var contentString = "<a target='_blank' href='http://www.ff-stlorenz.at/geomap/upload/uploads/"+loc[i].img+"'><img width='80' src='http://www.ff-stlorenz.at/geomap/upload/uploads/"+loc[i].img+"'></a>" ;
+              var infowindow = new google.maps.InfoWindow({
+                content: contentString
+              });
+          
+                              
               marker = new google.maps.Marker({
               position: new google.maps.LatLng(loc[i].lat, loc[i].lng),
+              icon: 'http://maps.google.com/mapfiles/ms/micons/red-pushpin.png',
               map: map
-            });
+                });
              markers.push(marker);
+                 
+             
+            google.maps.event.addListener(marker, 'click', function() {
+                //infowindow.open(map, this);
+            });
+                 
+                 marker.addListener('click', function() {
+                    infowindow.open(map, this);
+                  });
+                 
+                 
+            infowindow.open(map,marker);
+                 
+                 
+             }
+              }(i));
              
 
-             
              if(i == (middleRounded)){
-                 map.panTo(marker.position); //Make map global
+                 //map.panTo(marker.position); //Make map global
+                    var middleLatLng = new google.maps.LatLng(loc[i].lat, loc[i].lng); //Makes a latlng
+                    map.panTo(middleLatLng); //Make map global
              }
          }
 

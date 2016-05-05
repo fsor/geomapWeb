@@ -147,6 +147,15 @@ div.hero-unit img{
     color:#b65601;
 }
 
+#pathList a.active span.fa-map{
+    color:#6f9131;
+    cursor: pointer;
+}
+
+#pathList a.active:hover span.fa-map{
+    color:#546f25;
+}
+
 .mobile #pathList a:not(.btn), .mobile #pathList form{
     display: none!important;
 }
