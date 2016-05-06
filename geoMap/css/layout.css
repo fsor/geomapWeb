@@ -133,6 +133,10 @@ div.hero-unit img{
     margin-right: 10px;
 }
 
+#pathList li a.btn{
+    width:180px;
+}
+
 #pathList span.fa{
     color:#ccc;
     margin-left:5px;
@@ -150,6 +154,13 @@ div.hero-unit img{
 #pathList a.active span.fa-map{
     color:#6f9131;
     cursor: pointer;
+}
+.fa.fa-map.fa-2x{
+    font-size:1.8em;
+}
+input.pathNameInput{
+    width: 192px;
+    margin: 5px 10px 0 0;
 }
 
 #pathList a.active:hover span.fa-map{
