@@ -90,9 +90,19 @@ width:288px;
 	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#55ffffff', endColorstr='#00ffffff');
 }
 
-.loginbtn {
+.loginbtn, #createPa, #findBtn, .download, .download:hover  {
     border: 2px solid #546F25;
     background-color: #546F25;
+    background-image:none;
+    color:#fff;
+    text-shadow:none;
+    box-shadow: none;
+}
+
+
+.registerbtn{
+    border: 2px solid #C24445;
+    background-color: #C24445;
 }
 
 .button{
@@ -103,8 +113,24 @@ width:288px;
     color: white;
     cursor: pointer;
 }
+
+input[disabled]{
+    display: none;
+    cursor:auto;
+    background-color: #777;
+    border-color: #777;
+}
 .errormess {
 font:bold 12px Tahoma;
 margin-left:5px;
 color:#BC3F40;
 }
+
+.loggedin_form, .tabbable{
+    padding:10px;
+}
+
+.tabbable a:not(.btn){
+   color:#546F25;
+}
+

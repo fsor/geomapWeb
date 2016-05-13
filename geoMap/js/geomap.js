@@ -16,7 +16,10 @@ var len = 0;
 var gob;
 var activePath = 0;
 var pathDist = 0;
+var clickCount = 0;
+var thisKML;
 var GMstrokeColor = '#FF0000';
+var infowindows = [];
 var pathObj = {
 //        'Path1': {'coords':[],pathColor:''},
 //        'Path2': {'coords':[],pathColor:''}
@@ -24,16 +27,20 @@ var pathObj = {
 var activePathName = '';
 var pathCoords = [];
 var userId = 'default';
-var prasedResponse;
+var prasedResponse, lastEmptyString, oldPathID;
+var geocoder = new google.maps.Geocoder();
 
 
+var createTools;
+var editTools;
+var finishPathLink;
+var clearPathLink;
 
 //declare map
 var map;
 var clickCount = 0;
-
 //set the geocoder
-var geocoder = new google.maps.Geocoder();
+
 google.load('visualization', '1', {
     packages: ['columnchart']
 });
@@ -88,7 +95,7 @@ up206b.initialize = function (userData) {
 
         if(data){
            console.log('logged in as user: '+data);
-            $('.loggedin_form').html('Sie sind eingelogged als: '+data+' <span id="logout">abmelden</span>');
+            $('.loggedin_form').html('You are logged in as User: '+data+' <span id="logout">Sing out</span>');
             $('.login_form').hide();
             $('.tabbable, #pathList').show();
             loadDBpaths(data);
@@ -108,9 +115,93 @@ up206b.initialize = function (userData) {
     }
     checkLogStatus(userData);
     
-    
+                function choosePath(locThis, thisText){
+                        //console.log(locThis);
+                    //console.log($(this).text());
+                    var thisPathId = locThis;
+                    
+                    //console.log(thisPathId, lastEmptyString);
+                    
+                    
+                    //var checkIfEmpty = $("#pathList").find('li a:contains("'+locThis+'")').length;
+//                    if(checkIfEmpty == 0){
+//                        thisPathId = lastEmptyString;
+//                    }
+
+                    var result = $.grep(prasedResponse, function(e){ return e.pathID == thisPathId && e.userID == userId; });
+                    if(result.length){
+                        //console.log(result);
+                        var thisPathPath = result[0].path;
+                        var thisPathPathString = thisPathPath.replace(/\'/g, '"');
+                       //console.log(thisPathPathString);
+
+                        var thisPathPathObj = JSON.parse(thisPathPathString);
+                        //console.log(thisPathPathObj);
+                    }
+                    activePathName = thisPathId;
+//                    var checkIfEmpty = $("#pathList").find('li a:contains("'+activePathName+'")').length;
+//                    
+//                    if(checkIfEmpty == 0){
+//                        alert('empty');
+//                        console.log(lastEmptyString);
+//                        //activePathName = lastEmptyString;
+//
+//                    }
+                     $('#pathList li a').removeClass('btn-inverse active');
+                    
+                    if(pathObj[activePathName]){
+                        drawLine(pathObj[activePathName].coords, pathObj[activePathName].pathColor);
+                    }else{
+                        drawLine(pathObj[activePathName].coords, pathObj[activePathName].pathColor);
+                    }
+                 
+                    var checkIfEmpty = $("#pathList").find('li a:contains("'+activePathName+'")').length;
+                    if(checkIfEmpty == 0){
+                        activePathName = lastEmptyString;
+                    }
+                    
+                    var checkIfEmpty2 = $("#pathList").find('li a:contains("'+activePathName+'")').length;
+                    if(checkIfEmpty2 == 0){
+                        activePathName = oldPathID;
+                    }
+
+                    
+                    $("li a").filter(function() {
+                        return $(this).text() === activePathName;
+                    }).addClass('btn-inverse');
+                    
+                    
+                    $("li a").filter(function() {
+                        return $(this).text() === activePathName;
+                    }).siblings().children().addClass('active');
+                    
+                    
+                    
+                    flightPath.set('editable', false);
+                    //console.log(pathObj[activePathName]);
+                    if(!pathObj[activePathName]){
+                        activePathName = oldPathID;
+                    } 
+                    if(!pathObj[activePathName]){
+                        activePathName = lastEmptyString;
+                    } 
+
+
+                    if(pathObj[activePathName].coords.length == 0){
+                       flightPath.set('editable', true); 
+                    }
+                    refreshGraph(pathObj[activePathName].coords);
+
+                    //zoom(pathObj[activePathName].coords);
+                    updatePath(); 
+//                    if (pathObj[activePathName].coords.length > 1) displayPathElevation(pathObj[activePathName].coords, elevator, map);
+                        }
     
     function createPathList(pathID, pathCoords, thisPathColor){
+        //console.log(pathID, pathCoords, thisPathColor);
+        var allData = pathID + pathCoords + thisPathColor;
+        if(allData.length > 3){
+            $('#noPathsYet').hide();
                 var pathLi = $(document.createElement('li'));
                 var pathLink = $(document.createElement('a'));
                     pathLink.html(pathID);
@@ -118,15 +209,34 @@ up206b.initialize = function (userData) {
                         "class": 'btn'
                     });
                     pathLi.append(pathLink);
+                    createTools = $(document.createElement('div'));
+                    createTools.addClass('createTools');
+                    editTools = $(document.createElement('div'));
+                    editTools.addClass('editTools');
                 
                 var editPathLink = $(document.createElement('a'));
                     editPathLink.html('<span class="fa fa-map fa-2x" aria-hidden="true"></span>');
+            
+                    finishPathLink = $(document.createElement('a'));
+                    finishPathLink.html('<span class="fa fa-check fa-2x" aria-hidden="true"></span>');
+                    finishPathLink.hide();
+                    
+            
+                    clearPathLink = $(document.createElement('a'));
+                    clearPathLink.html('<span class="fa fa-eraser fa-2x" aria-hidden="true"></span>');
+                    clearPathLink.hide();
         
                 var deletePathLink = $(document.createElement('a'));
                     deletePathLink.html('<span class="fa fa-times fa-2x" aria-hidden="true"></span>');
         
                 var renamePathLink = $(document.createElement('a'));
                     renamePathLink.html('<span class="fa fa-pencil fa-2x" aria-hidden="true"></span>');
+            
+                var downloadPathLink = $(document.createElement('a'));
+                    downloadPathLink.html('<span class="fa fa-download fa-2x" aria-hidden="true"></span>');
+            
+                var dataPathLink = $(document.createElement('a'));
+                    dataPathLink.html('<span class="fa fa-area-chart fa-2x" aria-hidden="true"></span>');
  
                 var editPathColorForm = $(document.createElement('form'));
                 editPathColorForm.attr({
@@ -144,14 +254,27 @@ up206b.initialize = function (userData) {
                     'name' : 'color'+pathID,
                     'value' : thisPathColor
                 });  
-                
+
                 
                 editPathColorset.append(editPathColorInput);
                 editPathColorForm.append(editPathColorset);
-                pathLi.append(editPathColorForm);
-                pathLi.append(editPathLink);
-                pathLi.append(deletePathLink);
-                pathLi.append(renamePathLink);
+                editPathColorForm.appendTo(pathLi);
+            
+                editPathLink.appendTo(editTools);
+                dataPathLink.appendTo(editTools);
+                downloadPathLink.appendTo(editTools);
+                renamePathLink.appendTo(editTools);
+                finishPathLink.appendTo(createTools);
+                clearPathLink.appendTo(createTools);
+                renamePathLink.clone().appendTo(createTools);
+                deletePathLink.appendTo(editTools);
+                deletePathLink.clone().appendTo(createTools);
+            
+                pathLi.append(createTools);
+                pathLi.append(editTools);
+            
+                createTools.hide();
+                
 
                 editPathColorInput.colorPicker();
                 editPathColorInput.change(function(){
@@ -176,26 +299,86 @@ up206b.initialize = function (userData) {
         
         
                 $('#pathList li a span.fa-map').unbind().click(function(e){
-                    if($(this).parent().hasClass('active')){
+                    var getEditable = flightPath.get('editable');
+                    if($(this).parent().hasClass('active') && (getEditable == false)){
                          flightPath.set('editable', true);
                     }
+                     else if($(this).parent().hasClass('active') && (getEditable == true)){
+                        flightPath.set('editable', false);
+                }
                 });
+            
+                $('#pathList li a span.fa-eraser').unbind().click(function(e){
+                    if (confirm("Are you sure?")){
+                        CPbuttonClick();
+                        flightPath.set('editable', true);
+                        deleteMarker();
+                    }
+                });
+            
+                $('#pathList li a span.fa-check').unbind().click(function(e){
+                    flightPath.set('editable', false);
+
+                    //checkPathLength();
+                    var thisPathColor = pathObj[activePathName].pathColor;
+
+                    //console.log(len);
+                    //console.log(activePathName);
+                    if(len > 1){
+                       uploadPath(activePathName, thisPathColor);
+                        createTools.hide();
+                        editTools.show();
+                    }
+                    
+                });
+            
+                $('#pathList li a span.fa-area-chart').unbind().click(function(e){
+                    if($(this).parent().hasClass('active')){
+                        $('#elevation_chart, #charts').toggle();
+                        if (pathObj[activePathName].coords.length > 1) displayPathElevation(pathObj[activePathName].coords, elevator, map);
+                        
+                        var distance = (google.maps.geometry.spherical.computeLength(gMapath.getArray()) / 1000);
+                        var distanceRnd = parseFloat(distance).toFixed(1);
+
+                        if (distanceRnd != 0) $('#charts').html('This path has a length of ' + pathDist + ' kilometers.');
+                        //$('#elevation_chart').css('display', 'block');
+
+                        function distanceWithCommas(x) {
+                            return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                        }
+                              pathDist = distanceWithCommas(distanceRnd);
+                    }
+                });
+            
+                $('#pathList li a span.fa-download').unbind().click(function(e){
+                    if($(this).parent().hasClass('active')){
+                        $('#downloadList').toggle();
+                    }
+                });
+            
+            
         
                 $('#pathList li a span.fa-pencil').unbind().click(function(e){
-                     console.log($(this).parent().siblings('.btn-inverse').text());
+                    
+                    // console.log($(this).parent().parent().siblings('.btn-inverse').text());
                     if($(this).parent().hasClass('active')){
+
                         //$(this).parent().siblings('.btn-inverse').remove();
-                        var oldPathID = $(this).parent().siblings('.btn-inverse').text();
-                        $(this).parent().siblings('.btn-inverse').replaceWith('<input class="pathNameInput" type="text" name="newPathName">');
+                        if(clickCount == 0){
+                            oldPathID = $(this).parent().parent().siblings('.btn-inverse').text();
+                            clickCount++;
+                        }
+
+                        $(this).parent().parent().siblings('.btn-inverse').replaceWith('<input class="pathNameInput" type="text" name="newPathName">');
                         $('input.pathNameInput').focus();
                         $('input.pathNameInput').keyup(function(e){
                             if(e.keyCode == 13)
                             {
-                                console.log($('input.pathNameInput').val());
+                                if ($('#pathList li a:contains("' + $('input.pathNameInput').val() + '")').length === 0) {
+                                  
                                 var newPathId = $('input.pathNameInput').val();
+                                lastEmptyString = newPathId;
                                 $(this).replaceWith('<a class="btn btn-inverse">'+$('input.pathNameInput').val()+'</a>');
-                                console.log(oldPathID);
-
                                 var pathData = { 
                                             userID: userId, 
                                             pathID: newPathId,
@@ -209,6 +392,7 @@ up206b.initialize = function (userData) {
                                   data: pathData,
                                   success: function (response) {
                                       console.log('success: '+response);
+                                      
                                   },
                                   error: function (response) {
                                         console.log('error: '+response);
@@ -217,20 +401,45 @@ up206b.initialize = function (userData) {
                                 
                                 
                                 $('.btn.btn-inverse').unbind().click(function(e){
+                                    var thisText = $(this).text();
                                     var locThis = oldPathID;
-                                    choosePath(locThis);
+                                    choosePath(oldPathID, thisText);
                                     $('#pathList li a').removeClass('btn-inverse active');
-                                    $($("a:contains('"+$(this).text()+"')")).siblings().addClass('active');
-                                    $('li a:contains("'+$(this).text()+'")').addClass('btn-inverse');
-                                });
+                                    //$($("a:contains('"+$(this).text()+"')")).siblings().addClass('active');
+                                    
+                                    
+
+                                    var checkIfEmpty = $("#pathList").find('li a:contains("'+activePathName+'")').length;
+                                    if(checkIfEmpty == 0){
+                                        activePathName = thisText;
+                                    }
+
+
+                                    $("li a").filter(function() {
+                                        return $(this).text() === activePathName;
+                                    }).addClass('btn-inverse');
+
+
+                                    $("li a").filter(function() {
+                                        return $(this).text() === activePathName;
+                                    }).siblings().children().addClass('active');
+
+                                    });
+        
  
+                                }else{
+                                    alert('Pathname already exists');
+                                    return false;
+                                }
+                                
+       
                             }
                         });
                         
                         $('input.pathNameInput').focusout(function() {
                            $(this).replaceWith('<a class="btn btn-inverse">'+oldPathID+'</a>'); 
                         });
-                    
+
                     }
             
                 });
@@ -239,7 +448,7 @@ up206b.initialize = function (userData) {
                 $('#pathList li a span.fa-times').unbind().click(function(e){
                     if($(this).parent().hasClass('active')){
                         console.log(userId);
-                        var thisPath = $(this).parent().siblings('a:first').text();
+                        var thisPath = $(this).parent().parent().siblings('a:first').text();
                         //console.log(thisPath)
                         console.log(thisPath);
                         $.ajax({
@@ -250,7 +459,16 @@ up206b.initialize = function (userData) {
                                     if(data) { 
                                         console.log('success: '+data);
                                         $("#pathList").find('li a:contains("'+thisPath+'")').parent().remove();
-
+                                        var count = $("#pathList a.btn").length;
+                                        console.log(count);
+                                        deleteMarker();     
+                                        
+                                        CPbuttonClick();
+           
+                                        if(count == 0){
+                                             $('#tab4').append("<span id='noPathsYet'>There aren't any paths yet. </span>");
+                                        }
+    
                                     } else {
                                          console.log('error: '+data);
                                 }
@@ -258,47 +476,25 @@ up206b.initialize = function (userData) {
                         });
                     }
                 });
+            
+
         
-                $('#pathList li a:first-child').unbind().click(function(e){
+                $('#pathList li > a:first-child').unbind().click(function(e){
+                       //console.log('click first child');
                     var locThis = $(this);
+                    thisKML = locThis;
                     locThis = locThis.text();
                     choosePath(locThis);
-                    $($("a:contains('"+locThis+"')")).siblings().addClass('active');
+                    
+                                                        
+//                    $("#pathList li > a:first-child").filter(function() {
+//                        return $(this).text() === locThis;
+//                    }).siblings().children().addClass('active');
+                    
+                    //$($("a:contains('"+locThis+"')")).siblings().addClass('active');
                      });
         
-                    function choosePath(locThis){
-                        console.log(locThis);
-                    //console.log($(this).text());
-                    var thisPathId = locThis;
-                    var result = $.grep(prasedResponse, function(e){ return e.pathID == thisPathId && e.userID == userId; });
-                    if(result.length){
-                        //console.log(result);
-                        var thisPathPath = result[0].path;
-                        var thisPathPathString = thisPathPath.replace(/\'/g, '"');
-                       //console.log(thisPathPathString);
 
-                        var thisPathPathObj = JSON.parse(thisPathPathString);
-                        //console.log(thisPathPathObj);
-                    }
-                    activePathName = thisPathId;
-                    drawLine(pathObj[activePathName].coords, pathObj[activePathName].pathColor);
-                    //console.log(pathObj[activePathName].coords, pathObj[activePathName].pathColor);
-                    //console.log(pathObj[activePathName].coords);
-                    $('#pathList li a').removeClass('btn-inverse active');
-                    $('li a:contains("'+activePathName+'")').addClass('btn-inverse');
-                    
-                    
-                    
-                    flightPath.set('editable', false);
-                    if(pathObj[activePathName].coords.length == 0){
-                       flightPath.set('editable', true); 
-                    }
-                    refreshGraph(pathObj[activePathName].coords);
-
-                    zoom(pathObj[activePathName].coords);
-                    updatePath(); 
-                    if (pathObj[activePathName].coords.length > 1) displayPathElevation(pathObj[activePathName].coords, elevator, map);
-                        }
                
         
                     function zoom(coords) {
@@ -314,6 +510,177 @@ up206b.initialize = function (userData) {
                         //console.log(map.getZoom());
   
 
+                        }
+                     }else{
+                         $('#tab4').append("<span id='noPathsYet'>There aren't any paths yet. </span><span class='btn' id='createPa'>Create new path</span><br/><br/>");
+                         
+        $('#createPa').unbind().click(function(){
+            var lokalThis = $(this);
+            console.log(lokalThis);
+            createNewPath(lokalThis);
+             });
+            
+            function createNewPath(localThis){
+            var pathName;
+            $('#createPa').replaceWith('<input id="pathNameInput" class="pathNameInput" placeholder="Pathname" type="text" name="newPathName">');
+            $('#pathNameInput').focus();
+            $('#pathNameInput').keyup(function(e){
+                            if(e.keyCode == 13){
+                                deleteMarker();  
+                                pathName = $('#pathNameInput').val();
+                                lastEmptyString = pathName;
+                                $(this).replaceWith('<span class="btn" id="createPa">Create new path</span>');
+                                $('#createPa').unbind().click(function(){
+                                    createNewPath();
+                                });
+                                
+                                
+            checkPathLength();
+            //console.log(checkPathLength());
+            var createNewPathBool = checkPathLength();
+            
+            mapPath.length = 0;
+            if(createNewPathBool) pathId++;
+            pathCoords.length = 0;
+            activePath = pathId;
+            
+            flightPath.set('editable', false);
+            flightPath.setMap(null);
+
+            //var pathName = prompt("Please enter Path Name", "");
+            
+            flightPath.set('editable', true);
+            //pathObj.push([pathId, pathName, pathCoords]);
+            
+            var element = {};
+            element.coords = pathCoords;
+            pathObj[pathName] = element;
+            activePathName = pathName; 
+            pathObj[activePathName].pathColor = '#FF0000';
+                                
+            
+            if (pathName && createNewPathBool) {
+                console.log(createNewPathBool, pathName);
+//               deleteMarker();
+//               var emptyPath = '';
+//                createPathList(pathName, emptyPath, pathObj[activePathName].pathColor);
+                //console.log(pathName);
+
+                //$('#pathList li a:contains("'+activePathName+'")').addClass('btn-inverse'); 
+            }
+                
+                pathObj[activePathName].coords = [];
+      console.log( pathObj);
+                        $('body').keyup(function(e){
+                            
+                 var editable = flightPath.get('editable');
+                            
+                            if(pathObj[activePathName].coords.length != 0 && editable && e.keyCode == 13){
+                                flightPath.set('editable', false);
+
+                                //checkPathLength();
+                                var thisPathColor = pathObj[activePathName].pathColor;
+
+                                //console.log(len);
+                                //console.log(activePathName);
+
+                                   uploadPath(activePathName, thisPathColor);
+                                    createTools.hide();
+                                    editTools.show();
+                                
+                            }
+                        });
+               
+                function checkPathLength(){
+                    if(pathObj[activePathName]) { 
+                        if(pathObj[activePathName].coords.length == 0){
+                            //console.log('delete');
+                            //$('li:contains("'+activePathName+'")').remove();
+                            return false;
+                        }
+                        else{
+                            return true;
+                        }
+                        //console.log(pathObj[(pathId-1)][2].length);
+                    }
+                    else{
+                        return true
+                    }
+                };
+                
+                createPathList(pathName, pathCoords, pathObj[activePathName].pathColor);
+                $('#pathList li a:contains("'+pathName+'")').addClass('active');
+                $('#pathList li a').removeClass('btn-inverse active');
+                    //$($("a:contains('"+pathName+"')")).siblings().addClass('active');
+                
+                    $("li a").filter(function() {
+                        return $(this).text() === pathName;
+                    }).addClass('btn-inverse');
+                    
+                    
+                    $("li a").filter(function() {
+                        return $(this).text() === pathName;
+                    }).siblings().children().addClass('active');
+                                
+                createTools.show();
+                editTools.hide();
+     
+                 $('#pathList li > a:first-child').unbind().click(function(e){
+
+                     if(pathObj[lastEmptyString].coords.length < 2){
+                         $("#pathList").find('li a:contains("'+lastEmptyString+'")').parent().remove();
+                         var count = $("#pathList a.btn").length;
+                                        
+                        if(count == 0){
+                             $('#tab4').append("<span id='noPathsYet'>There aren't any paths yet. </span>");
+                        }
+                     }else{
+                         
+                    flightPath.set('editable', false);
+                    var thisPathColor = pathObj[activePathName].pathColor;
+                
+                       uploadPath(activePathName, thisPathColor);
+                        createTools.hide();
+                        editTools.show();
+                         
+                     }
+                     console.log(pathObj);
+                     $('#pathList li a').removeClass('active btn-inverse');
+                    var locThis = $(this);
+                    locThis = locThis.text();
+                     //console.log(locThis);
+                     choosePath(locThis);
+                     
+                    $(this).addClass('btn-inverse');
+                    
+                                                        
+//                    $("li a").filter(function() {
+//                        return $(this).text() === locThis;
+//                    }).siblings().children().addClass('active');
+                     
+                
+
+                    
+                    //$($("a:contains('"+locThis+"')")).siblings().addClass('active');
+                     });
+ 
+                            }
+                        });
+
+                        $('#pathNameInput').focusout(function() {
+                           $(this).replaceWith('<span class="btn" id="createPa">Create new path</span>');
+                        
+                
+                        $('#createPa').unbind().click(function(){
+                            var lokalThis = $(this);
+                            console.log(lokalThis);
+                            createNewPath(lokalThis);
+                        });
+                });
+            }
+            
+
+                            
                         
                      }
 
@@ -357,8 +724,7 @@ up206b.initialize = function (userData) {
                      createPathList(prasedResponse[i].pathID, prasedResponse[i].path, thisPathColor);
    
                     }
-//                   console.log('####');
-                   console.log(pathObj);
+                   //console.log(pathObj);
                 }
                 //alert(response);
                 $("#DBpathList a").click(function(e){
@@ -426,6 +792,9 @@ up206b.initialize = function (userData) {
     var map, flightPath = new google.maps.Polyline(), marker = new google.maps.Marker(), markers = [];
 
     function drawLine(loc, color) {
+//        console.log('#####');
+//        console.log(pathObj[activePathName].coords);
+//        console.log(loc);
         deleteMarker();
         flightPath.setMap(null);
         
@@ -474,11 +843,11 @@ up206b.initialize = function (userData) {
               var infowindow = new google.maps.InfoWindow({
                 content: contentString
               });
-          
+            infowindows.push(infowindow);
                               
               marker = new google.maps.Marker({
               position: new google.maps.LatLng(loc[i].lat, loc[i].lng),
-              icon: 'http://maps.google.com/mapfiles/ms/micons/red-pushpin.png',
+              icon: 'http://www.ff-stlorenz.at/geomap/img/photo.png',
               map: map
                 });
              marker.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
@@ -487,14 +856,25 @@ up206b.initialize = function (userData) {
              
             google.maps.event.addListener(marker, 'click', function() {
                 //infowindow.open(map, this);
+                 
             });
                  
+                       function closeInfoWindows() {
+                        for (var i = 0; i < infowindows.length; i++) {
+                          infowindows[i].close();
+                        }
+                      }
+                 
+             
                  marker.addListener('click', function() {
+                    infowindow.close(); //close all infowindows does not work
+                    closeInfoWindows()
                     infowindow.open(map, this);
+                    
                   });
                  
                  
-            infowindow.open(map,marker);
+            //infowindow.open(map,marker); //show infowindow by default
                  
                  
              }
@@ -511,21 +891,8 @@ up206b.initialize = function (userData) {
              }
          }
 
-        function setMapOnAll(map) {
-          for (var j = 0; j < markers.length; j++) {
-            markers[j].setMap(map);
-          }
-        }
 
 
-        function deleteMarker() {
-            setMapOnAll(null);
-            marker=null;
-        }
-           
-
-    
-        
 
         google.maps.event.addListener(flightPath.getPath(), "insert_at", updatePath);
         google.maps.event.addListener(flightPath.getPath(), "remove_at", updatePath);
@@ -534,21 +901,35 @@ up206b.initialize = function (userData) {
         
 
     };
+    
+    function setMapOnAll(map) {
+          for (var j = 0; j < markers.length; j++) {
+            markers[j].setMap(map);
+          }
+        }
+    
+    function deleteMarker() {
+            setMapOnAll(null);
+            marker=null;
+        }
 
 
     function updatePath() {
-        console.log('update path');
-        gMapath = flightPath.getPath();
+             
+        //console.log('update path');
+        gMapath = flightPath.getPath();        
         len = gMapath.getLength();
-        console.log(gMapath);
+        //console.log(gMapath);
         coordStr = '';
         mapPath = [];
         mapPath.length = 0;
         if (len > 1) {
+            finishPathLink.show();
+            clearPathLink.show();
             $('a[href="#tab2"]').removeClass('inactive');
        
 
-        for (var i = 0; i < len; i++) {
+        for (var i = 0; i < len; i++) { 
             coordStr += gMapath.getAt(i).toUrlValue(6) + "<br>";
 
             var movedPointGMap = gMapath.getAt(i).toUrlValue(6);
@@ -559,7 +940,26 @@ up206b.initialize = function (userData) {
             }
             mapPath.push(movedPoint);
         }
-            pathObj[activePathName].coords = mapPath.slice();
+//            console.log('####');
+//            console.log(pathObj[activePathName].coords);
+//            console.log(mapPath);
+            
+            for (var i = 0; i < pathObj[activePathName].coords.length; i++){
+                //console.log(mapPath[i].img);
+                if(pathObj[activePathName].coords[i].time){
+                    mapPath[i].time = pathObj[activePathName].coords[i].time;
+                }
+                if(pathObj[activePathName].coords[i].img){
+                    mapPath[i].img = pathObj[activePathName].coords[i].img;
+                }
+               
+            }
+            
+            
+            
+            pathObj[activePathName].coords = mapPath.slice(); //slice Path xxx
+            
+            
             //console.log(pathObj[activePathName].coords);
         //pathObj[(pathId-1)][2] = flightPlanCoordinates; 
         //console.log(pathObj);
@@ -567,111 +967,50 @@ up206b.initialize = function (userData) {
         var distance = (google.maps.geometry.spherical.computeLength(gMapath.getArray()) / 1000);
         var distanceRnd = parseFloat(distance).toFixed(1);
       
-        if (distanceRnd != 0) $('#charts').html('This path has a length of ' + pathDist + ' kilometers.');
-        $('#elevation_chart').css('display', 'block');
+     
+        //$('#elevation_chart').css('display', 'block');
 
         function distanceWithCommas(x) {
             return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
         }
               pathDist = distanceWithCommas(distanceRnd);
        
-
+        if (distanceRnd != 0) $('#charts').html('This path has a length of ' + pathDist + ' kilometers.');
+            
         createJSON(gMapath);
            
             //drawLine(pathObj[activePathName].coords, pathObj[activePathName].pathColor);
-            if (pathObj[activePathName].coords.length > 1) displayPathElevation(pathObj[activePathName].coords, elevator, map);
+            //if (pathObj[activePathName].coords.length > 1) displayPathElevation(pathObj[activePathName].coords, elevator, map);
         }
-    
+
     }
 
 
     function CenterControl(controlDiv, map) {
         // Set CSS for the control border.
-        var createNewPath = $(document.createElement('div'));
-        createNewPath.attr('class','GMbtn');
-        createNewPath.title = 'Click to recenter the map######';
-        //controlDiv.appendChild(createNewPath);
-        createNewPath.appendTo(controlDiv);
 
-        // Set CSS for the control interior.
-        var createNewPathTxt = $(document.createElement('div'));
-        createNewPathTxt.attr('class','GMbtnTxt');
-        createNewPathTxt.html('Create New Path');
-        createNewPath.append(createNewPathTxt);
         
-        function checkPathLength(){
-            if(pathObj[activePathName]) { 
-                if(pathObj[activePathName].coords.length == 0){
-                    //console.log('delete');
-                    //$('li:contains("'+activePathName+'")').remove();
-                    return false;
-                }
-                else{
-                    return true;
-                }
-                //console.log(pathObj[(pathId-1)][2].length);
-            }
-            else{
-                return true
-            }
-        };
-        
-
-
-
-        createNewPath.on('click', function () {
-            checkPathLength();
-            //console.log('######');
-            //console.log(checkPathLength());
-            var createNewPathBool = checkPathLength();
-            
-            mapPath.length = 0;
-            if(createNewPathBool) pathId++;
-            pathCoords.length = 0;
-            activePath = pathId;
-            
-            flightPath.set('editable', false);
-            flightPath.setMap(null);
-
-            var pathName = prompt("Please enter Path Name", "Path "+pathId);
-            flightPath.set('editable', true);
-            //pathObj.push([pathId, pathName, pathCoords]);
-            
-            var element = {};
-            element.coords = pathCoords;
-            pathObj[pathName] = element;
-            activePathName = pathName; 
-            pathObj[activePathName].pathColor = '#FF0000';
-            
-            
-            if (pathName && createNewPathBool) {
-               var emptyPath = '';
-                createPathList(pathName, emptyPath, pathObj[activePathName].pathColor);
-                //$('#pathList li a:contains("'+activePathName+'")').addClass('btn-inverse'); 
-            }
-            
-            
-            
-//            $('#pathList li a').click(function () {
-//                console.log('click');
-//                var showPathWithID = $(this).text();
-//                activePathName = showPathWithID;
-//                drawLine(pathObj[activePathName].coords, pathObj[activePathName].pathColor);
-//                console.log(pathObj[activePathName].coords, pathObj[activePathName].pathColor);
-//                //console.log(pathObj[activePathName].coords);
-//                $('#pathList li a').removeClass('btn-inverse');
-//                $('li a:contains("'+activePathName+'")').addClass('btn-inverse');
-//                flightPath.set('editable', false);
+//        function checkPathLength(){
+//            if(pathObj[activePathName]) { 
 //                if(pathObj[activePathName].coords.length == 0){
-//                   flightPath.set('editable', true); 
+//                    //console.log('delete');
+//                    //$('li:contains("'+activePathName+'")').remove();
+//                    return false;
 //                }
-//                refreshGraph(pathObj[activePathName].coords);
-//                
-//            });
-            
-        });   
+//                else{
+//                    return true;
+//                }
+//                //console.log(pathObj[(pathId-1)][2].length);
+//            }
+//            else{
+//                return true
+//            }
+//        };
+        
+
             //Event listener
             google.maps.event.addListener(map, 'click', function (event) {
+                console.log();
 
                 var newPoint = {
                     lat: event.latLng.lat()
@@ -686,61 +1025,15 @@ up206b.initialize = function (userData) {
                 }
 
             });
-
-        // Set CSS for the control border.
-        var clearPath = $(document.createElement('div'));
-        clearPath.attr('class','GMbtn');
-        clearPath.title = 'Click to recenter the map######';
-        clearPath.appendTo(controlDiv);
-
-        // Set CSS for the control interior.
-        var controlText = $(document.createElement('div'));
-        controlText.attr('class','GMbtnTxt');
-        controlText.html('Clear Path');
-        clearPath.append(controlText);
-
-        // Setup the click event listeners: simply set the map to Chicago.
-        clearPath.on('click', function () {
-            if (confirm("Are you sure?"))
-                {
-                    CPbuttonClick();
-                    flightPath.set('editable', true);
-                }
-            
-        });
-
-        // Set CSS for the control border.
-        var finishPath = $(document.createElement('div'));
-        finishPath.attr('class','GMbtn');
-        finishPath.title = 'Click to recenter the map######';
-        finishPath.appendTo(controlDiv);
-
-        // Set CSS for the control interior.
-        var finishPathTxt = $(document.createElement('div'));
-        finishPathTxt.attr('class','GMbtnTxt');
-        finishPathTxt.html('Finish Path');
-        finishPath.append(finishPathTxt);
-
-        // Setup the click event listeners: simply set the map to Chicago.
-        finishPath.on('click', function () {
-            flightPath.set('editable', false);
-            checkPathLength();
-            var thisPathColor = pathObj[activePathName].pathColor;
-            
-            //console.log(len);
-            //console.log(activePathName);
-            if(len > 1){
-               uploadPath(activePathName, thisPathColor);
-            }
-           
-        });
-
     }
     
     function uploadPath(activePathName, thisPathColor) {
-        //console.log('upload path');
-        var pathString = JSON.stringify(path.j);
+        //console.log(pathObj[activePathName].coords);
 
+        //console.log('upload path');
+        //console.log(path.j);
+        var pathString = JSON.stringify(pathObj[activePathName].coords);
+        //console.log(userId, activePathName, thisPathColor, pathString);
         var postData = { userID: userId, 
                           pathID: activePathName,
                           pathColor: thisPathColor,
@@ -801,14 +1094,16 @@ up206b.initialize = function (userData) {
         $('#elevation_chart').html('');
     }
     
-    function showKML() {
+    function showKML(definePath) {
         gob = '';
-        gob += kmlheading();
+        gob += kmlheading(definePath);
         var meereshoehe = 0;
 
         for (var i = 0; i < len; i++) {
-            coordStr += path.getAt(i).toUrlValue(6) + "<br>";
-            var movedPointGMap = path.getAt(i).toUrlValue(6);
+            console.log(definePath);
+            //coordStr += definePath.getAt(i).toUrlValue(6) + "<br>";
+            //var movedPointGMap = definePath.getAt(i).toUrlValue(6);
+            var movedPointGMap = 'assssssssss';
 
             var movedPointCoords = movedPointGMap.split(',');
             var movedPoint = {
@@ -824,19 +1119,16 @@ up206b.initialize = function (userData) {
         //console.log(gob);
     }
 
-    function kmlheading() {
+    function kmlheading(definePath) {
         var heading = "";
 
-        var pathName = 'activePathName';
-        var pathDesc = 'Just another Path';
+        var pathName = definePath;
 
         var i;
         heading = '<?xml version="1.0" encoding="UTF-8"?>\n' +
             '<kml xmlns="http://www.opengis.net/kml/2.2">\n' +
             '<Document>\n\t' +
             '<name>' + pathName + '</name>\n\t' +
-            '<open>1</open>\n\t' +
-            '<description>' + pathDesc + '</description>\n\t' +
             '<Style id="redLinePoly">\n\t\t<LineStyle>\n\t\t<color>ff0000ff</color>\n\t\t</LineStyle>\n\t\t<PolyStyle>\n\t\t<color>ffff0000</color>\n\t\t</PolyStyle>\n\t\t</Style>\n\t' +
             '<Folder>\n\t' +
             '<name>Paths</name>\n\t<visibility>0</visibility>\n\t<description></description>\n\t' +
@@ -853,9 +1145,16 @@ up206b.initialize = function (userData) {
     }
 
     function displayPathElevation(path, elevator, map) {
+        var googlePathArr = [];
         if(path.length > 1){
+            for(i = 0; i < path.length; i++){
+                console.log();
+                var googleLatLng = new google.maps.LatLng(path[i].lat, path[i].lng);
+                googlePathArr.push(googleLatLng);
+            }
+
             elevator.getElevationAlongPath({
-                'path': path
+                'path': googlePathArr
                 , 'samples': 256
             }, plotElevation);
         }
@@ -879,14 +1178,33 @@ up206b.initialize = function (userData) {
             chart.draw(data, {
                 height: 150
                 , legend: 'none'
-                , titleY: 'Meereshöhe (m)'
+                , titleY: 'Sealevel (m)'
             });
         }
     }
+    
+
+    function geocode() {
+	var address = $('#address').val();
+	geocoder.geocode( { 'address': address}, function(results, status) {
+		if (status == google.maps.GeocoderStatus.OK) 
+		{
+			map.setCenter(results[0].geometry.location);
+			var marker = new google.maps.Marker({
+				map: map, 
+				position: results[0].geometry.location
+			});
+		} 
+		else 
+		{
+			alert("Geocode was not successful for the following reason: " + status);
+		}
+	});
+}
 
 
     function createJSON(path) {
-        console.log('create JSON');
+        //console.log('create JSON');
         var pathPoints = [];
         for (var i = 0; i < path.length; i++) {
             var p = path.getAt(i).toUrlValue(6).split(',');
@@ -902,7 +1220,7 @@ up206b.initialize = function (userData) {
         var data = "text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(pathPoints));
         var a = document.createElement('a');
         $(a).attr({
-            "class": 'btn btn-inverse'
+            "class": 'btn download'
             , "data-id": 'downloadJSON'
         });
         a.href = 'data:' + data;
@@ -910,32 +1228,32 @@ up206b.initialize = function (userData) {
         a.innerHTML = 'download JSON';
 
         var container = document.getElementById('downloadList');
+        if(container)
         container.appendChild(a);
 
 
         $('a[data-id="downloadKML"]').remove();
         var a2 = document.createElement('a');
         $(a2).attr({
-            "class": 'btn btn-inverse'
+            "class": 'btn download'
             , "data-id": 'downloadKML'
             });
         a2.innerHTML = 'download KML';
         a2.download = 'data.kml';
+        if(container)
         container.appendChild(a2);
 
         $('a[data-id="downloadKML"]').click(function () {
-            showKML();
+            //console.log(thisKML.text());
+            showKML(thisKML.text());
             this.href = "data:text/plain;charset=UTF-8," + encodeURIComponent(gob);
         });
     }
 
-    $('a[href="#tab3"]').click(function () {
-        refreshGraph();
-    });
+
     
     function refreshGraph(coords){
-        $('#elevation_chart').css('display', 'none');
-        $('#charts').html('');
+        $('#elevation_chart, #charts').css('display', 'none');
     }
     
     
@@ -965,6 +1283,28 @@ up206b.initialize = function (userData) {
         refreshGmap();
     });
     
+    $("#findBtn").click(function(e) {
+        geocode();
+    });
+    
+    $('#searchForm input#address').keyup(function(e){
+        e.preventDefault();
+    if(e.keyCode == 13){
+         geocode();
+        }
+        });
+    
+
+
+    $( "#sidebar-wrapper" ).click(function( event ) {
+    if( !$( event.target ).is( "a, span, form, input, .colorPicker-picker" ) )
+    {
+       flightPath.set('editable', false);
+    }
+});
+    
+
+
     function refreshGmap(){
     clearTimeout(reloadMap);
         var reloadMap = setTimeout(
@@ -973,3 +1313,5 @@ up206b.initialize = function (userData) {
           }, 250);
     }
 }
+
+

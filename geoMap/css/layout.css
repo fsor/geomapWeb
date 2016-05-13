@@ -49,7 +49,7 @@ body {
 }
 
 #logout{
-    color:blue;
+    color:#C24445;
     cursor: pointer;
 }
 
@@ -123,6 +123,10 @@ div.hero-unit img{
 .sidePanel.mobile{
     left:-400px;
 }
+#pathList{
+    margin:0;
+    padding-bottom:20px;
+}
 
 #pathList li {
     list-style-type:none;
@@ -134,7 +138,7 @@ div.hero-unit img{
 }
 
 #pathList li a.btn{
-    width:180px;
+    width:130px;
 }
 
 #pathList span.fa{
@@ -151,6 +155,42 @@ div.hero-unit img{
     color:#b65601;
 }
 
+#pathList a.active span.fa-download{
+    color:#F5722C;
+    cursor: pointer;
+}
+
+#pathList a.active:hover span.fa-download{
+    color:#F75700;
+}
+
+#pathList a.active span.fa-check{
+    color:#54D609;
+    cursor: pointer;
+}
+
+#pathList a.active:hover span.fa-check{
+    color:#41B300;
+}
+
+#pathList a.active span.fa-eraser{
+    color:#F5722C;
+    cursor: pointer;
+}
+
+#pathList a.active:hover span.fa-eraser{
+    color:#F75700;
+}
+
+#pathList a.active span.fa-area-chart{
+    color:#3B9DFF;
+    cursor: pointer;
+}
+
+#pathList a.active:hover span.fa-area-chart{
+    color:#0080ff;
+}
+
 #pathList a.active span.fa-map{
     color:#6f9131;
     cursor: pointer;
@@ -159,7 +199,7 @@ div.hero-unit img{
     font-size:1.8em;
 }
 input.pathNameInput{
-    width: 192px;
+    width: 142px;
     margin: 5px 10px 0 0;
 }
 
@@ -186,8 +226,26 @@ input.pathNameInput{
 }
 
 #downloadList .btn {
-    display:table;
+    margin-right:10px;
     margin-bottom: 10px;
+}
+#elevation_chart, #charts, #downloadList{
+    display: none;
+}
+
+rect[Attributes Style] {
+    fill: #546F25;
+}
+
+#logout{
+    border: 2px solid #C24445;
+    background-color: #C24445;
+    width: 50%;
+    margin-top: 20px;
+    border-radius: 5px;
+    padding: 2px 5px;
+    color: white;
+    cursor: pointer;
 }
 
 
@@ -215,6 +273,21 @@ input.pathNameInput{
 	z-index:auto!important;
 }
 
+a[href="#tab5"], a[href="#tab0"]{
+    display: none!important;
+}
+
+.editTools{
+    display: inline;
+}
+.createTools{
+   display: inline;
+}
+
+.controlset input {
+    display: inline-block;
+    width: 10px;
+}
 
 /*!
  * Start Bootstrap - Simple Sidebar HTML Template (http://startbootstrap.com)
